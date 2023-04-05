@@ -1,22 +1,29 @@
 package windowutil
 
-import "runtime"
+import (
+	"runtime"
+	"sync"
+)
 
 type Operator interface {
 	ListWindows() ([]*Window, error)
 	MoveWindows(w *Window, x, y int) error
 }
 
-func NewOperator() Operator {
-	var res Operator
-	switch runtime.GOOS {
-	case `windows`:
-		res = NewWinUtil()
-	case `linux`:
-		res = NewLinuxUtil()
-	case `darwin`:
-		res = NewDarwinUtil()
-	}
+var operator Operator
+var operatorOnce sync.Once
 
-	return res
+func GetOperator() Operator {
+	operatorOnce.Do(func() {
+		switch runtime.GOOS {
+		case `windows`:
+			operator = NewWinUtil()
+		case `linux`:
+			operator = NewLinuxUtil()
+		case `darwin`:
+			operator = NewDarwinUtil()
+		}
+	})
+
+	return operator
 }
